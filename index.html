@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#090b0e">
+    <meta name="description" content="broruan 的个人学习博客，记录理解、实践与复盘。">
+    <meta name="author" content="broruan">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="zh_CN">
+    <meta property="og:title" content="R.Blog | broruan 的学习工作台">
+    <meta property="og:description" content="记录理解、实践与复盘。">
+    <meta property="og:url" content="https://broruan.github.io/Rblog.github.io/">
+    <meta property="og:image" content="https://avatars.githubusercontent.com/u/176096649?v=4&s=512">
+    <link rel="canonical" href="https://broruan.github.io/Rblog.github.io/">
+    <title>R.Blog | broruan 的学习工作台</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+    <script src="content.js" defer></script>
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+
+    <header class="site-header" aria-label="主导航">
+      <a class="brand" href="#top" aria-label="R.Blog 首页">
+        <span class="brand-mark" aria-hidden="true">R.</span>
+        <span>Blog</span>
+      </a>
+      <nav class="site-nav" aria-label="页面导航">
+        <a href="#focus">学习轨迹</a>
+        <a href="#notes">公开笔记</a>
+        <a id="header-github-link" class="icon-link" href="https://github.com/broruan" target="_blank" rel="noreferrer">
+          <i data-lucide="github" aria-hidden="true"></i>
+          <span class="nav-label">GitHub</span>
+        </a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section id="top" class="workspace" aria-labelledby="page-title">
+        <div class="workspace-copy">
+          <div class="system-line" aria-label="网站状态">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="profile-status">学习记录已就绪</span>
+            <span class="system-code">SYS / RBLOG</span>
+          </div>
+
+          <p class="eyebrow">PERSONAL LEARNING LOG</p>
+          <h1 id="page-title">R.Blog</h1>
+          <p id="profile-tagline" class="headline-note">broruan 的学习工作台</p>
+          <p id="profile-bio" class="intro">记录理解、实践与复盘。</p>
+
+          <div class="primary-actions" aria-label="常用操作">
+            <a class="button button-primary" href="#notes">
+              <i data-lucide="notebook-tabs" aria-hidden="true"></i>
+              查看笔记
+            </a>
+            <a id="hero-github-link" class="button button-secondary" href="https://github.com/broruan" target="_blank" rel="noreferrer">
+              <i data-lucide="github" aria-hidden="true"></i>
+              访问 GitHub
+            </a>
+          </div>
+        </div>
+
+        <aside class="profile-console" aria-label="broruan 的个人资料">
+          <div class="console-header">
+            <span>PROFILE.LOG</span>
+            <span aria-hidden="true">01</span>
+          </div>
+          <div class="profile-identity">
+            <div class="avatar-wrap">
+              <img id="profile-avatar" src="https://avatars.githubusercontent.com/u/176096649?v=4&s=240" alt="broruan 的 GitHub 头像" width="112" height="112">
+              <span id="avatar-fallback" class="avatar-fallback" aria-hidden="true">BR</span>
+            </div>
+            <div>
+              <p id="profile-name" class="profile-name">broruan</p>
+              <p id="profile-role" class="profile-role">学习者 / 构建者</p>
+            </div>
+          </div>
+          <dl id="profile-meta" class="profile-meta"></dl>
+          <div class="console-command" aria-label="当前命令">
+            <span aria-hidden="true">$</span>
+            <span>keep-learning --public</span>
+            <span class="cursor" aria-hidden="true"></span>
+          </div>
+        </aside>
+
+        <div id="stats-strip" class="stats-strip" aria-label="学习数据"></div>
+      </section>
+
+      <section id="focus" class="section-band" aria-labelledby="focus-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-index">01 / LEARNING TRACK</p>
+            <h2 id="focus-title">当前学习轨迹</h2>
+          </div>
+          <p>把正在投入的方向，拆成可以持续推进的行动。</p>
+        </div>
+        <div id="focus-list" class="focus-list"></div>
+        <div id="focus-empty" class="empty-inline" hidden>
+          <span class="empty-code">NO_ACTIVE_TRACK</span>
+          <p>当前学习方向待更新。</p>
+        </div>
+      </section>
+
+      <section id="notes" class="section-band notes-section" aria-labelledby="notes-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-index">02 / PUBLIC NOTES</p>
+            <h2 id="notes-title">公开笔记</h2>
+          </div>
+          <p id="notes-count" aria-live="polite">0 篇记录</p>
+        </div>
+
+        <div id="note-tools" class="note-tools" hidden>
+          <label class="search-box" for="note-search">
+            <i data-lucide="search" aria-hidden="true"></i>
+            <span class="sr-only">搜索笔记</span>
+            <input id="note-search" type="search" placeholder="搜索标题、摘要或标签" autocomplete="off">
+          </label>
+          <div id="tag-filters" class="tag-filters" aria-label="按标签筛选"></div>
+        </div>
+
+        <div id="notes-list" class="notes-list"></div>
+
+        <div id="notes-empty" class="notes-empty" hidden>
+          <div class="empty-symbol" aria-hidden="true">
+            <span>_</span>
+          </div>
+          <div>
+            <p class="empty-code">AWAITING_FIRST_ENTRY</p>
+            <h3>第一篇笔记，留给真实的学习发生之后。</h3>
+            <p>这里不会放置虚构内容。完成一次学习或实践后，在 <code>content.js</code> 的 <code>notes</code> 中加入记录并提交，页面会自动生成笔记列表。</p>
+            <a class="text-link" href="https://github.com/broruan/Rblog.github.io/blob/main/README.md" target="_blank" rel="noreferrer">
+              查看编辑说明
+              <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+            </a>
+          </div>
+        </div>
+
+        <div id="search-empty" class="empty-inline" hidden>
+          <span class="empty-code">NO_MATCH</span>
+          <p>没有找到符合当前条件的笔记。</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p><span class="footer-mark">R.</span> <span id="footer-owner">broruan</span> 的学习日志</p>
+      <p>持续输入，公开输出。</p>
+    </footer>
+
+    <dialog id="note-dialog" class="note-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-shell">
+        <header class="dialog-header">
+          <div>
+            <p id="dialog-date" class="dialog-date"></p>
+            <h2 id="dialog-title"></h2>
+          </div>
+          <button id="dialog-close" class="icon-button" type="button" aria-label="关闭笔记">
+            <span class="icon-fallback" aria-hidden="true">×</span>
+            <i data-lucide="x" aria-hidden="true"></i>
+          </button>
+        </header>
+        <div id="dialog-tags" class="dialog-tags"></div>
+        <article id="dialog-content" class="dialog-content"></article>
+      </div>
+    </dialog>
+
+    <noscript>
+      <div class="noscript-message">此页面需要 JavaScript 才能读取 <code>content.js</code> 中的学习内容。</div>
+    </noscript>
+  </body>
+</html>

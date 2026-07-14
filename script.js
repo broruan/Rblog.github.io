@@ -1,0 +1,292 @@
+(() => {
+  "use strict";
+
+  const data = window.BLOG_CONTENT || {};
+  const notes = Array.isArray(data.notes) ? data.notes : [];
+  const state = { query: "", tag: "全部" };
+
+  const byId = (id) => document.getElementById(id);
+  const profile = data.profile || {};
+  const githubUrl = data.links?.github || "https://github.com/broruan";
+
+  function setText(id, value) {
+    const element = byId(id);
+    if (element && value) element.textContent = value;
+  }
+
+  function createIcon(name) {
+    const icon = document.createElement("i");
+    icon.dataset.lucide = name;
+    icon.setAttribute("aria-hidden", "true");
+    return icon;
+  }
+
+  function renderProfile() {
+    setText("profile-name", profile.name);
+    setText("profile-role", profile.role);
+    setText("profile-tagline", profile.tagline);
+    setText("profile-bio", profile.bio);
+    setText("profile-status", profile.status);
+    setText("footer-owner", profile.name);
+
+    const avatar = byId("profile-avatar");
+    const fallback = byId("avatar-fallback");
+    if (profile.avatar) avatar.src = profile.avatar;
+    avatar.alt = `${profile.name || "broruan"} 的头像`;
+    avatar.addEventListener("error", () => {
+      avatar.hidden = true;
+      fallback.hidden = false;
+    }, { once: true });
+
+    ["header-github-link", "hero-github-link"].forEach((id) => {
+      byId(id).href = githubUrl;
+    });
+
+    const meta = Array.isArray(profile.meta) ? profile.meta : [];
+    const metaList = byId("profile-meta");
+    metaList.replaceChildren();
+    meta.forEach((item) => {
+      const group = document.createElement("div");
+      const term = document.createElement("dt");
+      const description = document.createElement("dd");
+      term.textContent = item.label;
+      description.textContent = item.value;
+      group.append(term, description);
+      metaList.append(group);
+    });
+    metaList.hidden = meta.length === 0;
+  }
+
+  function renderStats() {
+    const container = byId("stats-strip");
+    const stats = Array.isArray(data.learningStats) ? data.learningStats : [];
+    container.replaceChildren();
+
+    stats.forEach((stat) => {
+      const item = document.createElement("div");
+      const value = document.createElement("strong");
+      const label = document.createElement("span");
+      value.textContent = stat.value;
+      label.textContent = stat.label;
+      item.append(value, label);
+      container.append(item);
+    });
+    container.hidden = stats.length === 0;
+  }
+
+  function renderFocus() {
+    const container = byId("focus-list");
+    const empty = byId("focus-empty");
+    const focusItems = Array.isArray(data.currentFocus) ? data.currentFocus : [];
+    container.replaceChildren();
+
+    focusItems.forEach((focus, index) => {
+      const item = document.createElement("article");
+      item.className = "focus-item";
+
+      const number = document.createElement("span");
+      number.className = "focus-number";
+      number.textContent = String(index + 1).padStart(2, "0");
+
+      const content = document.createElement("div");
+      const heading = document.createElement("h3");
+      const description = document.createElement("p");
+      heading.textContent = focus.title;
+      description.textContent = focus.description;
+      content.append(heading, description);
+
+      const status = document.createElement("span");
+      status.className = "focus-status";
+      status.textContent = focus.status || "进行中";
+      item.append(number, content, status);
+
+      if (Number.isFinite(focus.progress)) {
+        const progress = document.createElement("div");
+        progress.className = "focus-progress";
+        progress.setAttribute("role", "progressbar");
+        progress.setAttribute("aria-label", `${focus.title} 进度`);
+        progress.setAttribute("aria-valuemin", "0");
+        progress.setAttribute("aria-valuemax", "100");
+        progress.setAttribute("aria-valuenow", String(focus.progress));
+        const fill = document.createElement("span");
+        fill.style.width = `${Math.min(100, Math.max(0, focus.progress))}%`;
+        progress.append(fill);
+        item.append(progress);
+      }
+      container.append(item);
+    });
+
+    empty.hidden = focusItems.length !== 0;
+    container.hidden = focusItems.length === 0;
+  }
+
+  function noteMatches(note) {
+    const query = state.query.trim().toLocaleLowerCase("zh-CN");
+    const tags = Array.isArray(note.tags) ? note.tags : [];
+    const tagMatches = state.tag === "全部" || tags.includes(state.tag);
+    if (!query) return tagMatches;
+    const haystack = [note.title, note.summary, ...tags].join(" ").toLocaleLowerCase("zh-CN");
+    return tagMatches && haystack.includes(query);
+  }
+
+  function formatDate(date) {
+    if (!date) return "日期待补充";
+    const parsed = new Date(`${date}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) return date;
+    return new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(parsed);
+  }
+
+  function createTag(tag) {
+    const element = document.createElement("span");
+    element.className = "note-tag";
+    element.textContent = `#${tag}`;
+    return element;
+  }
+
+  function openNote(note) {
+    setText("dialog-title", note.title);
+    setText("dialog-date", formatDate(note.date));
+
+    const tags = byId("dialog-tags");
+    tags.replaceChildren(...(note.tags || []).map(createTag));
+
+    const content = byId("dialog-content");
+    content.replaceChildren();
+    const blocks = Array.isArray(note.body) ? note.body : [];
+
+    blocks.forEach((block) => {
+      if (block.type === "paragraph") {
+        const paragraph = document.createElement("p");
+        paragraph.textContent = block.text;
+        content.append(paragraph);
+      } else if (block.type === "heading") {
+        const heading = document.createElement("h3");
+        heading.textContent = block.text;
+        content.append(heading);
+      } else if (block.type === "list") {
+        const list = document.createElement("ul");
+        (block.items || []).forEach((item) => {
+          const listItem = document.createElement("li");
+          listItem.textContent = item;
+          list.append(listItem);
+        });
+        content.append(list);
+      } else if (block.type === "code") {
+        const pre = document.createElement("pre");
+        const code = document.createElement("code");
+        if (block.language) code.dataset.language = block.language;
+        code.textContent = block.code;
+        pre.append(code);
+        content.append(pre);
+      }
+    });
+
+    byId("note-dialog").showModal();
+  }
+
+  function renderFilters() {
+    const filterContainer = byId("tag-filters");
+    const tags = [...new Set(notes.flatMap((note) => note.tags || []))].sort((a, b) => a.localeCompare(b, "zh-CN"));
+    filterContainer.replaceChildren();
+
+    ["全部", ...tags].forEach((tag) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "tag-button";
+      button.textContent = tag;
+      button.setAttribute("aria-pressed", String(state.tag === tag));
+      button.addEventListener("click", () => {
+        state.tag = tag;
+        renderFilters();
+        renderNotes();
+      });
+      filterContainer.append(button);
+    });
+  }
+
+  function renderNotes() {
+    const list = byId("notes-list");
+    const empty = byId("notes-empty");
+    const searchEmpty = byId("search-empty");
+    const tools = byId("note-tools");
+    const filtered = notes.filter(noteMatches);
+    list.replaceChildren();
+
+    notes.forEach((note, index) => {
+      if (!noteMatches(note)) return;
+      const article = document.createElement("article");
+      article.className = "note-card";
+
+      const meta = document.createElement("div");
+      meta.className = "note-meta";
+      const indexLabel = document.createElement("span");
+      const date = document.createElement("time");
+      indexLabel.textContent = `NOTE_${String(index + 1).padStart(2, "0")}`;
+      date.dateTime = note.date || "";
+      date.textContent = formatDate(note.date);
+      meta.append(indexLabel, date);
+
+      const title = document.createElement("h3");
+      title.textContent = note.title;
+      const summary = document.createElement("p");
+      summary.textContent = note.summary;
+
+      const footer = document.createElement("div");
+      footer.className = "note-card-footer";
+      const tags = document.createElement("div");
+      tags.className = "note-card-tags";
+      tags.append(...(note.tags || []).map(createTag));
+      const button = document.createElement("button");
+      button.className = "read-button";
+      button.type = "button";
+      button.append("阅读笔记", createIcon("arrow-up-right"));
+      button.addEventListener("click", () => openNote(note));
+      footer.append(tags, button);
+
+      article.append(meta, title, summary, footer);
+      list.append(article);
+    });
+
+    byId("notes-count").textContent = `${filtered.length} / ${notes.length} 篇记录`;
+    empty.hidden = notes.length !== 0;
+    tools.hidden = notes.length === 0;
+    list.hidden = filtered.length === 0;
+    searchEmpty.hidden = notes.length === 0 || filtered.length !== 0;
+    refreshIcons();
+  }
+
+  function refreshIcons() {
+    if (window.lucide) {
+      window.lucide.createIcons({ attrs: { "stroke-width": 1.8 } });
+      document.documentElement.classList.add("icons-ready");
+    }
+  }
+
+  function initDialog() {
+    const dialog = byId("note-dialog");
+    byId("dialog-close").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+  }
+
+  function initSearch() {
+    byId("note-search").addEventListener("input", (event) => {
+      state.query = event.target.value;
+      renderNotes();
+    });
+  }
+
+  renderProfile();
+  renderStats();
+  renderFocus();
+  renderFilters();
+  renderNotes();
+  initDialog();
+  initSearch();
+  refreshIcons();
+})();
