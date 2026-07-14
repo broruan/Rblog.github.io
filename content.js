@@ -17,5 +17,5 @@ window.BLOG_CONTENT = {
     github: "https://github.com/broruan"
   },
 
-  notes: []
+  postsManifest: "posts/index.json"
 };
