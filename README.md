@@ -55,6 +55,8 @@ console.log("代码围栏也可以正常显示");
 
 Markdown 由本地固定版本的 Marked 解析，YAML 由 js-yaml 解析，生成结果经过 DOMPurify 消毒后才进入页面。文章内的相对链接和图片路径以该 `.md` 文件所在位置为基准。
 
+首页的“阅读笔记”会导航到独立的 `article.html?post=文件名` 页面。该页面由清单和 Markdown 文件动态生成，不需要为每篇文章手动创建 HTML。
+
 ## 更新个人资料
 
 打开 `content.js`，修改 `profile`、`currentFocus`、`learningStats` 和 `links`。`postsManifest` 通常保持为 `posts/index.json`。

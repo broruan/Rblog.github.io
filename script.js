@@ -6,6 +6,7 @@
   const byId = (id) => document.getElementById(id);
   const profile = data.profile || {};
   const githubUrl = data.links?.github || "https://github.com/broruan";
+  const markdown = window.RBlogMarkdown;
   let notes = [];
 
   function setText(id, value) {
@@ -119,86 +120,15 @@
     container.hidden = focusItems.length === 0;
   }
 
-  function normalizeManifestEntry(entry) {
-    if (typeof entry !== "string") {
-      throw new TypeError("posts/index.json 中的每一项都必须是 Markdown 文件名。");
-    }
-
-    const filename = entry.trim();
-    if (!filename.endsWith(".md") || filename.includes("..") || filename.startsWith("/") || filename.includes("\\") || /[?#]/.test(filename)) {
-      throw new TypeError(`无效的 Markdown 文件名：${filename || "(空)"}`);
-    }
-    return `posts/${filename}`;
-  }
-
-  function parseFrontMatter(source, path) {
-    const match = source.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/);
-    if (!match) {
-      throw new SyntaxError(`${path} 缺少有效的 YAML front matter。`);
-    }
-
-    const metadata = window.jsyaml.load(match[1]) || {};
-    if (typeof metadata !== "object" || Array.isArray(metadata)) {
-      throw new TypeError(`${path} 的 front matter 必须是对象。`);
-    }
-
-    const title = typeof metadata.title === "string" ? metadata.title.trim() : "";
-    const summary = typeof metadata.summary === "string" ? metadata.summary.trim() : "";
-    const rawTags = metadata.tags == null ? [] : metadata.tags;
-    if (!title || !summary || !metadata.date) {
-      throw new TypeError(`${path} 必须包含 title、date 和 summary。`);
-    }
-    if (!Array.isArray(rawTags) || rawTags.some((tag) => typeof tag !== "string")) {
-      throw new TypeError(`${path} 的 tags 必须是字符串数组。`);
-    }
-
-    const date = metadata.date instanceof Date
-      ? metadata.date.toISOString().slice(0, 10)
-      : String(metadata.date).trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(new Date(`${date}T00:00:00`).getTime())) {
-      throw new TypeError(`${path} 的 date 必须使用 YYYY-MM-DD 格式。`);
-    }
-
-    const defaultId = path.split("/").pop().replace(/\.md$/i, "");
-    return {
-      id: typeof metadata.slug === "string" && metadata.slug.trim() ? metadata.slug.trim() : defaultId,
-      title,
-      date,
-      summary,
-      tags: rawTags.map((tag) => tag.trim()).filter(Boolean),
-      draft: metadata.draft === true,
-      markdown: match[2].trim(),
-      path
-    };
-  }
-
-  async function fetchPost(path) {
-    const response = await fetch(path, { cache: "no-cache" });
-    if (!response.ok) throw new Error(`${path} 返回 HTTP ${response.status}。`);
-    return parseFrontMatter(await response.text(), path);
-  }
-
   async function loadMarkdownPosts() {
     const loading = byId("notes-loading");
     const errorBox = byId("notes-error");
     const manifestUrl = data.postsManifest || "posts/index.json";
 
     try {
-      if (!window.marked || !window.DOMPurify || !window.jsyaml) {
-        throw new Error("Markdown 解析组件未能加载。");
-      }
-
-      const response = await fetch(manifestUrl, { cache: "no-cache" });
-      if (!response.ok) throw new Error(`${manifestUrl} 返回 HTTP ${response.status}。`);
-      const manifest = await response.json();
-      if (!Array.isArray(manifest)) throw new TypeError(`${manifestUrl} 必须是文件名数组。`);
-
-      const paths = manifest.map(normalizeManifestEntry);
-      if (new Set(paths).size !== paths.length) {
-        throw new TypeError(`${manifestUrl} 中存在重复文件名。`);
-      }
-
-      const results = await Promise.allSettled(paths.map(fetchPost));
+      markdown.ensureDependencies();
+      const paths = await markdown.fetchManifest(manifestUrl);
+      const results = await Promise.allSettled(paths.map(markdown.fetchPost));
       const failures = results.filter((result) => result.status === "rejected");
       notes = results
         .filter((result) => result.status === "fulfilled" && !result.value.draft)
@@ -248,68 +178,6 @@
     element.className = "note-tag";
     element.textContent = `#${tag}`;
     return element;
-  }
-
-  function resolveArticleResources(container, note) {
-    const articleUrl = new URL(note.path, window.location.href);
-    container.querySelectorAll("a[href]").forEach((link) => {
-      const rawHref = link.getAttribute("href");
-      if (!rawHref || rawHref.startsWith("#")) return;
-      try {
-        const resolved = new URL(rawHref, articleUrl);
-        if (!["http:", "https:", "mailto:"].includes(resolved.protocol)) throw new Error();
-        link.href = resolved.href;
-        if (resolved.origin !== window.location.origin) {
-          link.target = "_blank";
-          link.rel = "noreferrer noopener";
-        }
-      } catch {
-        link.removeAttribute("href");
-      }
-    });
-
-    container.querySelectorAll("img[src]").forEach((image) => {
-      try {
-        const resolved = new URL(image.getAttribute("src"), articleUrl);
-        if (!["http:", "https:"].includes(resolved.protocol)) throw new Error();
-        image.src = resolved.href;
-        image.loading = "lazy";
-        image.decoding = "async";
-      } catch {
-        image.remove();
-      }
-    });
-  }
-
-  function renderMarkdown(note) {
-    const html = window.marked.parse(note.markdown, { gfm: true, breaks: false });
-    const fragment = window.DOMPurify.sanitize(html, {
-      RETURN_DOM_FRAGMENT: true,
-      USE_PROFILES: { html: true },
-      FORBID_TAGS: ["style"],
-      FORBID_ATTR: ["style"]
-    });
-    const content = byId("dialog-content");
-    content.replaceChildren(fragment);
-    resolveArticleResources(content, note);
-  }
-
-  function openNote(note) {
-    setText("dialog-title", note.title);
-    setText("dialog-date", formatDate(note.date));
-    const tags = byId("dialog-tags");
-    tags.replaceChildren(...note.tags.map(createTag));
-
-    try {
-      renderMarkdown(note);
-    } catch (error) {
-      const message = document.createElement("p");
-      message.className = "markdown-error";
-      message.textContent = "这篇 Markdown 文章暂时无法渲染，请检查文件格式。";
-      byId("dialog-content").replaceChildren(message);
-      console.error("Markdown render error:", error);
-    }
-    byId("note-dialog").showModal();
   }
 
   function renderFilters() {
@@ -363,12 +231,11 @@
       const tags = document.createElement("div");
       tags.className = "note-card-tags";
       tags.append(...note.tags.map(createTag));
-      const button = document.createElement("button");
-      button.className = "read-button";
-      button.type = "button";
-      button.append("阅读笔记", createIcon("arrow-up-right"));
-      button.addEventListener("click", () => openNote(note));
-      footer.append(tags, button);
+      const link = document.createElement("a");
+      link.className = "read-button";
+      link.href = markdown.articleHref(note);
+      link.append("阅读笔记", createIcon("arrow-right"));
+      footer.append(tags, link);
 
       article.append(meta, title, summary, footer);
       list.append(article);
@@ -389,14 +256,6 @@
     }
   }
 
-  function initDialog() {
-    const dialog = byId("note-dialog");
-    byId("dialog-close").addEventListener("click", () => dialog.close());
-    dialog.addEventListener("click", (event) => {
-      if (event.target === dialog) dialog.close();
-    });
-  }
-
   function initSearch() {
     byId("note-search").addEventListener("input", (event) => {
       state.query = event.target.value;
@@ -407,7 +266,6 @@
   renderProfile();
   renderStats();
   renderFocus();
-  initDialog();
   initSearch();
   refreshIcons();
   loadMarkdownPosts();

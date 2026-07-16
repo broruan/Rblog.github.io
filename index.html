@@ -20,6 +20,7 @@
     <script src="vendor/marked.umd.js" defer></script>
     <script src="vendor/purify.min.js" defer></script>
     <script src="content.js" defer></script>
+    <script src="markdown.js" defer></script>
     <script src="script.js" defer></script>
   </head>
   <body>
@@ -74,7 +75,7 @@
           <div class="profile-identity">
             <div class="avatar-wrap">
               <img id="profile-avatar" src="https://avatars.githubusercontent.com/u/176096649?v=4&s=240" alt="broruan 的 GitHub 头像" width="112" height="112">
-              <span id="avatar-fallback" class="avatar-fallback" aria-hidden="true">BR</span>
+              <span id="avatar-fallback" class="avatar-fallback" aria-hidden="true" hidden></span>
             </div>
             <div>
               <p id="profile-name" class="profile-name">broruan</p>
@@ -166,23 +167,6 @@
       <p><span class="footer-mark">R.</span> <span id="footer-owner">broruan</span> 的学习日志</p>
       <p>持续输入，公开输出。</p>
     </footer>
-
-    <dialog id="note-dialog" class="note-dialog" aria-labelledby="dialog-title">
-      <div class="dialog-shell">
-        <header class="dialog-header">
-          <div>
-            <p id="dialog-date" class="dialog-date"></p>
-            <h2 id="dialog-title"></h2>
-          </div>
-          <button id="dialog-close" class="icon-button" type="button" aria-label="关闭笔记">
-            <span class="icon-fallback" aria-hidden="true">×</span>
-            <i data-lucide="x" aria-hidden="true"></i>
-          </button>
-        </header>
-        <div id="dialog-tags" class="dialog-tags"></div>
-        <article id="dialog-content" class="dialog-content"></article>
-      </div>
-    </dialog>
 
     <noscript>
       <div class="noscript-message">此页面需要 JavaScript 才能读取和解析 <code>posts/</code> 中的 Markdown 文章。</div>
