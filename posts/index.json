@@ -1,5 +1,6 @@
 [
     "study_gazebo.md",
     "Smoothing_Odometry.md",
-    "google_input_method.md"
+    "google_input_method.md",
+    "Nav2_slam.md"
 ]
