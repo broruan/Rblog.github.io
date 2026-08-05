@@ -3,8 +3,8 @@ title: "Linux 串口权限管理学习笔记"
 date: 2026-07-18
 summary: "解决linux串口调试时的若干问题"
 tags:
-  - AMCL
-  - Nav2
+  - Linux
+  - serial
 draft: false
 ---
 
