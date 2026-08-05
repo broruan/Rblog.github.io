@@ -1,6 +1,6 @@
 ---
 title: "Linux 串口权限管理学习笔记"
-date: 2026-07-18
+date: 2026-08-5
 summary: "解决linux串口调试时的若干问题"
 tags:
   - Linux
