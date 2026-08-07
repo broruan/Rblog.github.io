@@ -8,5 +8,6 @@
     "Nav2_fastlivo2.md",
     "nav2_params.md",
     "USART_ADC_DMA.md",
-    "Linux_serial_root.md"
+    "Linux_serial_root.md",
+    "odom_bias.md"
 ]
