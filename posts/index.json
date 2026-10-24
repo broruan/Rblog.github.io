@@ -11,5 +11,6 @@
     "Linux_serial_root.md",
     "odom_bias.md",
     "minipc_connect.md",
-    "study_diagnostic_msgs.md"
+    "study_diagnostic_msgs.md",
+    "Hessian_study.md"
 ]
