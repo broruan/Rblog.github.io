@@ -1,272 +1,170 @@
 (() => {
   "use strict";
-
   const data = window.BLOG_CONTENT || {};
-  const state = { query: "", tag: "全部" };
-  const byId = (id) => document.getElementById(id);
-  const profile = data.profile || {};
-  const githubUrl = data.links?.github || "https://github.com/broruan";
   const markdown = window.RBlogMarkdown;
+  const ui = window.RBlogUI;
+  const byId = (id) => document.getElementById(id);
+  const initial = new URLSearchParams(location.search);
+  const state = { query: initial.get("q") || "", tag: initial.get("tag") || "全部", expanded: false };
   let notes = [];
-
-  function setText(id, value) {
-    const element = byId(id);
-    if (element && value) element.textContent = value;
-  }
-
-  function createIcon(name) {
-    const icon = document.createElement("i");
-    icon.dataset.lucide = name;
-    icon.setAttribute("aria-hidden", "true");
-    return icon;
-  }
+  let topics = [];
+  const text = (id, value) => { if (value) byId(id).textContent = value; };
 
   function renderProfile() {
-    setText("profile-name", profile.name);
-    setText("profile-role", profile.role);
-    setText("profile-tagline", profile.tagline);
-    setText("profile-bio", profile.bio);
-    setText("profile-status", profile.status);
-    setText("footer-owner", profile.name);
-
+    const profile = data.profile || {};
+    ["name", "role", "tagline", "bio"].forEach((key) => text("profile-" + key, profile[key]));
+    text("footer-owner", profile.name);
     const avatar = byId("profile-avatar");
-    const fallback = byId("avatar-fallback");
+    const onError = () => { avatar.hidden = true; byId("avatar-fallback").hidden = false; };
+    avatar.addEventListener("error", onError, { once: true });
     if (profile.avatar) avatar.src = profile.avatar;
-    avatar.alt = `${profile.name || "broruan"} 的头像`;
-    avatar.addEventListener("error", () => {
-      avatar.hidden = true;
-      fallback.hidden = false;
-    }, { once: true });
-
-    ["header-github-link", "hero-github-link"].forEach((id) => {
-      byId(id).href = githubUrl;
+    avatar.alt = (profile.name || "broruan") + " 的头像";
+    if (avatar.complete && !avatar.naturalWidth) onError();
+    ["header-github-link", "hero-github-link"].forEach((id) => byId(id).href = data.links?.github || "https://github.com/broruan");
+    const meta = byId("profile-meta");
+    (profile.meta || []).forEach((item) => {
+      const row = document.createElement("div");
+      const dt = document.createElement("dt");
+      const dd = document.createElement("dd");
+      dt.textContent = item.label; dd.textContent = item.value;
+      row.append(dt, dd); meta.append(row);
     });
-
-    const meta = Array.isArray(profile.meta) ? profile.meta : [];
-    const metaList = byId("profile-meta");
-    metaList.replaceChildren();
-    meta.forEach((item) => {
-      const group = document.createElement("div");
-      const term = document.createElement("dt");
-      const description = document.createElement("dd");
-      term.textContent = item.label;
-      description.textContent = item.value;
-      group.append(term, description);
-      metaList.append(group);
-    });
-    metaList.hidden = meta.length === 0;
-  }
-
-  function renderStats() {
-    const container = byId("stats-strip");
-    const stats = Array.isArray(data.learningStats) ? data.learningStats : [];
-    container.replaceChildren();
-
-    stats.forEach((stat) => {
-      const item = document.createElement("div");
-      const value = document.createElement("strong");
-      const label = document.createElement("span");
-      value.textContent = stat.value;
-      label.textContent = stat.label;
-      item.append(value, label);
-      container.append(item);
-    });
-    container.hidden = stats.length === 0;
-  }
-
-  function renderFocus() {
-    const container = byId("focus-list");
-    const empty = byId("focus-empty");
+    meta.hidden = !meta.children.length;
     const focusItems = Array.isArray(data.currentFocus) ? data.currentFocus : [];
-    container.replaceChildren();
-
-    focusItems.forEach((focus, index) => {
+    byId("focus").hidden = !focusItems.length;
+    focusItems.forEach((focus) => {
       const item = document.createElement("article");
       item.className = "focus-item";
-
-      const number = document.createElement("span");
-      number.className = "focus-number";
-      number.textContent = String(index + 1).padStart(2, "0");
-
-      const content = document.createElement("div");
-      const heading = document.createElement("h3");
-      const description = document.createElement("p");
-      heading.textContent = focus.title;
-      description.textContent = focus.description;
-      content.append(heading, description);
-
-      const status = document.createElement("span");
-      status.className = "focus-status";
-      status.textContent = focus.status || "进行中";
-      item.append(number, content, status);
-
+      const title = document.createElement("h3"); title.textContent = focus.title;
+      const description = document.createElement("p"); description.textContent = focus.description;
+      const status = document.createElement("span"); status.className = "focus-status"; status.textContent = focus.status || "进行中";
+      item.append(title, description, status);
       if (Number.isFinite(focus.progress)) {
         const progress = document.createElement("div");
         progress.className = "focus-progress";
         progress.setAttribute("role", "progressbar");
-        progress.setAttribute("aria-label", `${focus.title} 进度`);
-        progress.setAttribute("aria-valuemin", "0");
-        progress.setAttribute("aria-valuemax", "100");
-        progress.setAttribute("aria-valuenow", String(focus.progress));
-        const fill = document.createElement("span");
-        fill.style.width = `${Math.min(100, Math.max(0, focus.progress))}%`;
-        progress.append(fill);
-        item.append(progress);
+        progress.setAttribute("aria-label", focus.title + " 进度");
+        progress.setAttribute("aria-valuemin", "0"); progress.setAttribute("aria-valuemax", "100");
+        progress.setAttribute("aria-valuenow", String(Math.min(100, Math.max(0, focus.progress))));
+        const fill = document.createElement("span"); fill.style.width = progress.getAttribute("aria-valuenow") + "%";
+        progress.append(fill); item.append(progress);
       }
-      container.append(item);
+      byId("focus-list").append(item);
     });
-
-    empty.hidden = focusItems.length !== 0;
-    container.hidden = focusItems.length === 0;
   }
 
-  async function loadMarkdownPosts() {
-    const loading = byId("notes-loading");
-    const errorBox = byId("notes-error");
-    const manifestUrl = data.postsManifest || "posts/index.json";
-
+  function updateURL() {
+    const url = new URL(location.href);
+    state.query ? url.searchParams.set("q", state.query) : url.searchParams.delete("q");
+    state.tag !== "全部" ? url.searchParams.set("tag", state.tag) : url.searchParams.delete("tag");
+    history.replaceState(null, "", url);
+  }
+  function selectTag(tag) {
+    state.tag = tag;
+    updateURL(); renderFilters(); renderTopics(); renderNotes();
+  }
+  function renderFilters() {
+    const container = byId("tag-filters");
+    const visible = state.expanded ? topics : topics.filter((item, index) => index < 6 || item.tag === state.tag);
+    container.replaceChildren();
+    [{ tag: "全部", count: notes.length }, ...visible].forEach(({tag, count}) => {
+      const button = document.createElement("button");
+      button.type = "button"; button.className = "tag-button";
+      button.append(tag);
+      const amount = document.createElement("span"); amount.className = "tag-count"; amount.textContent = count;
+      button.append(amount); button.setAttribute("aria-pressed", String(state.tag === tag));
+      button.addEventListener("click", () => selectTag(tag)); container.append(button);
+    });
+    const expand = byId("expand-tags");
+    expand.hidden = topics.length <= 6;
+    expand.textContent = state.expanded ? "收起标签 −" : "展开全部 ＋";
+    expand.setAttribute("aria-expanded", String(state.expanded));
+  }
+  function renderTopics() {
+    const container = byId("topic-list"); container.replaceChildren();
+    topics.slice(0, 5).forEach(({tag, count}) => {
+      const button = document.createElement("button"); button.className = "topic-button"; button.type = "button";
+      const label = document.createElement("span"); label.className = "topic-label"; label.textContent = tag;
+      const amount = document.createElement("span"); amount.textContent = String(count).padStart(2, "0");
+      button.append(label, amount); button.setAttribute("aria-pressed", String(state.tag === tag));
+      button.addEventListener("click", () => selectTag(tag)); container.append(button);
+    });
+  }
+  function renderStats() {
+    const stats = data.learningStats?.length ? data.learningStats : [
+      { value: String(notes.length).padStart(2, "0"), label: "篇公开手记" },
+      { value: String(topics.length).padStart(2, "0"), label: "个探索主题" }
+    ];
+    byId("stats-strip").replaceChildren(...stats.map((stat) => {
+      const item = document.createElement("div");
+      const value = document.createElement("strong"); value.textContent = stat.value;
+      const label = document.createElement("span"); label.textContent = stat.label;
+      item.append(value, label); return item;
+    }));
+    text("notebook-count", notes.length + " 篇手记 · 持续更新中");
+  }
+  function renderNotes() {
+    const query = state.query.trim().toLocaleLowerCase("zh-CN");
+    const filtered = notes.filter((note) => (state.tag === "全部" || note.tags.includes(state.tag)) && (!query || note.searchText.includes(query)));
+    const list = byId("notes-list"); list.replaceChildren();
+    filtered.forEach((note) => {
+      const index = notes.indexOf(note);
+      const featured = index === 0 && !query && state.tag === "全部";
+      const article = document.createElement("article"); article.className = "note-card" + (featured ? " is-featured" : "");
+      const meta = document.createElement("div");
+      const number = document.createElement("span"); number.className = "note-number"; number.textContent = String(index + 1).padStart(2, "0");
+      const date = document.createElement("time"); date.className = "note-date"; date.dateTime = note.date;
+      date.append(note.date.slice(5).replace("-", "."));
+      const year = document.createElement("span"); year.textContent = note.date.slice(0, 4); date.append(year); meta.append(number, date);
+      const content = document.createElement("div"); content.className = "note-content";
+      if (featured) {
+        const label = document.createElement("span"); label.className = "latest-label"; label.append(ui.icon("sparkles"), "最近一篇 / LATEST NOTE"); content.append(label);
+      }
+      const title = document.createElement("h3"); const link = document.createElement("a");
+      link.href = markdown.articleHref(note); link.textContent = note.title; title.append(link);
+      const summary = document.createElement("p"); summary.textContent = note.summary;
+      const footer = document.createElement("div"); footer.className = "note-card-footer";
+      const tags = document.createElement("div"); tags.className = "note-card-tags";
+      note.tags.forEach((tag) => { const element = document.createElement("span"); element.className = "note-tag"; element.textContent = "# " + tag; tags.append(element); });
+      const time = document.createElement("span"); time.className = "note-read-time"; time.textContent = "约 " + markdown.readingMinutes(note.markdown) + " 分钟";
+      footer.append(tags, time); content.append(title, summary, footer);
+      const arrow = document.createElement("span"); arrow.className = "note-arrow"; arrow.setAttribute("aria-hidden", "true"); arrow.append(ui.icon("arrow-up-right"));
+      article.append(meta, content, arrow); list.append(article);
+    });
+    text("notes-count", filtered.length === notes.length ? notes.length + " 篇公开手记" : filtered.length + " / " + notes.length + " 篇手记");
+    byId("note-tools").hidden = !notes.length;
+    byId("notes-empty").hidden = !!notes.length || !byId("notes-error").hidden;
+    byId("search-empty").hidden = !notes.length || !!filtered.length;
+    ui.refreshIcons();
+  }
+  async function loadNotes() {
     try {
-      markdown.ensureDependencies();
-      const paths = await markdown.fetchManifest(manifestUrl);
+      const paths = await markdown.fetchManifest(data.postsManifest || "posts/index.json");
       const results = await Promise.allSettled(paths.map(markdown.fetchPost));
       const failures = results.filter((result) => result.status === "rejected");
-      notes = results
-        .filter((result) => result.status === "fulfilled" && !result.value.draft)
-        .map((result) => result.value)
-        .sort((a, b) => b.date.localeCompare(a.date, "zh-CN"));
-
-      if (failures.length > 0) {
-        failures.forEach((failure) => console.error("Markdown article error:", failure.reason));
-        errorBox.hidden = false;
-        setText("notes-error-message", `${failures.length} 篇文章无法解析；其他有效文章仍会正常显示。`);
-      } else {
-        errorBox.hidden = true;
+      notes = results.filter((result) => result.status === "fulfilled" && !result.value.draft).map((result) => result.value).sort((a, b) => b.date.localeCompare(a.date));
+      notes.forEach((note) => note.searchText = [note.title, note.summary, ...note.tags, note.markdown].join(" ").toLocaleLowerCase("zh-CN"));
+      const counts = new Map(); notes.forEach((note) => new Set(note.tags).forEach((tag) => counts.set(tag, (counts.get(tag) || 0) + 1)));
+      topics = [...counts].map(([tag, count]) => ({tag, count})).sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag, "zh-CN"));
+      if (state.tag !== "全部" && !counts.has(state.tag)) { state.tag = "全部"; updateURL(); }
+      if (failures.length) {
+        byId("notes-error").hidden = false; text("notes-error-message", failures.length + " 篇手记读取失败，其他手记可以正常阅读。");
+        failures.forEach((failure) => console.error(failure.reason));
       }
     } catch (error) {
-      console.error("Markdown manifest error:", error);
-      notes = [];
-      errorBox.hidden = false;
-      setText("notes-error-message", error.message || "请检查文章清单与 front matter。");
+      byId("notes-error").hidden = false; text("notes-error-message", error.message);
     } finally {
-      loading.hidden = true;
-      renderFilters();
-      renderNotes();
+      byId("notes-loading").hidden = true;
+      renderFilters(); renderTopics(); renderStats(); renderNotes();
     }
   }
-
-  function noteMatches(note) {
-    const query = state.query.trim().toLocaleLowerCase("zh-CN");
-    const tagMatches = state.tag === "全部" || note.tags.includes(state.tag);
-    if (!query) return tagMatches;
-    const haystack = [note.title, note.summary, ...note.tags].join(" ").toLocaleLowerCase("zh-CN");
-    return tagMatches && haystack.includes(query);
-  }
-
-  function formatDate(date) {
-    if (!date) return "日期待补充";
-    const parsed = new Date(`${date}T00:00:00`);
-    if (Number.isNaN(parsed.getTime())) return date;
-    return new Intl.DateTimeFormat("zh-CN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    }).format(parsed);
-  }
-
-  function createTag(tag) {
-    const element = document.createElement("span");
-    element.className = "note-tag";
-    element.textContent = `#${tag}`;
-    return element;
-  }
-
-  function renderFilters() {
-    const filterContainer = byId("tag-filters");
-    const tags = [...new Set(notes.flatMap((note) => note.tags))].sort((a, b) => a.localeCompare(b, "zh-CN"));
-    filterContainer.replaceChildren();
-
-    ["全部", ...tags].forEach((tag) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "tag-button";
-      button.textContent = tag;
-      button.setAttribute("aria-pressed", String(state.tag === tag));
-      button.addEventListener("click", () => {
-        state.tag = tag;
-        renderFilters();
-        renderNotes();
-      });
-      filterContainer.append(button);
-    });
-  }
-
-  function renderNotes() {
-    const list = byId("notes-list");
-    const empty = byId("notes-empty");
-    const searchEmpty = byId("search-empty");
-    const tools = byId("note-tools");
-    const filtered = notes.filter(noteMatches);
-    list.replaceChildren();
-
-    filtered.forEach((note) => {
-      const article = document.createElement("article");
-      article.className = "note-card";
-
-      const meta = document.createElement("div");
-      meta.className = "note-meta";
-      const indexLabel = document.createElement("span");
-      const date = document.createElement("time");
-      indexLabel.textContent = `NOTE_${String(notes.indexOf(note) + 1).padStart(2, "0")}`;
-      date.dateTime = note.date;
-      date.textContent = formatDate(note.date);
-      meta.append(indexLabel, date);
-
-      const title = document.createElement("h3");
-      title.textContent = note.title;
-      const summary = document.createElement("p");
-      summary.textContent = note.summary;
-
-      const footer = document.createElement("div");
-      footer.className = "note-card-footer";
-      const tags = document.createElement("div");
-      tags.className = "note-card-tags";
-      tags.append(...note.tags.map(createTag));
-      const link = document.createElement("a");
-      link.className = "read-button";
-      link.href = markdown.articleHref(note);
-      link.append("阅读笔记", createIcon("arrow-right"));
-      footer.append(tags, link);
-
-      article.append(meta, title, summary, footer);
-      list.append(article);
-    });
-
-    byId("notes-count").textContent = `${filtered.length} / ${notes.length} 篇记录`;
-    empty.hidden = notes.length !== 0 || !byId("notes-error").hidden;
-    tools.hidden = notes.length === 0;
-    list.hidden = filtered.length === 0;
-    searchEmpty.hidden = notes.length === 0 || filtered.length !== 0;
-    refreshIcons();
-  }
-
-  function refreshIcons() {
-    if (window.lucide) {
-      window.lucide.createIcons({ attrs: { "stroke-width": 1.8 } });
-      document.documentElement.classList.add("icons-ready");
-    }
-  }
-
-  function initSearch() {
-    byId("note-search").addEventListener("input", (event) => {
-      state.query = event.target.value;
-      renderNotes();
-    });
-  }
-
   renderProfile();
-  renderStats();
-  renderFocus();
-  initSearch();
-  refreshIcons();
-  loadMarkdownPosts();
+  byId("note-search").value = state.query;
+  byId("note-search").addEventListener("input", (event) => { state.query = event.target.value; updateURL(); renderNotes(); });
+  byId("expand-tags").addEventListener("click", () => { state.expanded = !state.expanded; renderFilters(); });
+  byId("reset-search").addEventListener("click", () => { state.query = ""; byId("note-search").value = ""; selectTag("全部"); byId("note-search").focus(); });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable) { event.preventDefault(); byId("note-search").focus(); }
+  });
+  loadNotes();
 })();

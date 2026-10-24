@@ -1,98 +1,62 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#090b0e">
-    <meta name="description" content="broruan 的学习笔记。">
-    <meta name="author" content="broruan">
-    <meta property="og:type" content="article">
-    <meta property="og:locale" content="zh_CN">
-    <meta property="og:title" content="学习笔记 | R.Blog">
-    <meta property="og:description" content="broruan 的学习笔记。">
-    <link rel="canonical" href="https://broruan.github.io/Rblog.github.io/article.html">
-    <title>学习笔记 | R.Blog</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
-    <script src="vendor/js-yaml.min.js" defer></script>
-    <script src="vendor/marked.umd.js" defer></script>
-    <script src="vendor/purify.min.js" defer></script>
-    <script src="content.js" defer></script>
-    <script src="markdown.js" defer></script>
-    <script src="article.js" defer></script>
-  </head>
-  <body>
-    <a class="skip-link" href="#article-content">跳到文章正文</a>
-
-    <header class="site-header" aria-label="主导航">
-      <a class="brand" href="index.html" aria-label="返回 R.Blog 首页">
-        <span class="brand-mark" aria-hidden="true">R.</span>
-        <span>Blog</span>
-      </a>
-      <nav class="site-nav" aria-label="页面导航">
-        <a href="index.html">首页</a>
-        <a href="index.html#notes">公开笔记</a>
-        <a id="article-github-link" class="icon-link" href="https://github.com/broruan" target="_blank" rel="noreferrer">
-          <i data-lucide="github" aria-hidden="true"></i>
-          <span class="nav-label">GitHub</span>
-        </a>
-      </nav>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f4">
+  <meta name="description" content="broruan 的技术手记。">
+  <meta name="author" content="broruan">
+  <meta property="og:type" content="article">
+  <meta property="og:locale" content="zh_CN">
+  <meta property="og:title" content="技术手记 | R.Blog">
+  <meta property="og:description" content="broruan 的技术手记。">
+  <link rel="canonical" href="https://broruan.github.io/Rblog.github.io/article.html">
+  <title>技术手记 | R.Blog</title>
+  <script src="theme.js"></script>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/lucide.min.js" defer></script>
+  <script src="vendor/js-yaml.min.js" defer></script>
+  <script src="vendor/marked.umd.js" defer></script>
+  <script src="vendor/purify.min.js" defer></script>
+  <script src="vendor/highlight.min.js" defer></script>
+  <script src="vendor/katex/katex.min.js" defer></script>
+  <script src="content.js" defer></script>
+  <script src="ui.js" defer></script>
+  <script src="markdown.js" defer></script>
+  <script src="article.js" defer></script>
+</head>
+<body class="reading-page">
+  <a class="skip-link" href="#article-content">跳到文章正文</a>
+  <header class="site-header"><div class="header-inner">
+    <a class="brand" href="index.html" aria-label="R.Blog 首页"><span class="brand-mark">R.</span><span>R.Blog<span class="brand-caption"> / 技术手记</span></span></a>
+    <nav class="site-nav" aria-label="主导航"><a href="index.html#notes">全部手记</a><a id="article-github-link" class="github-nav" href="https://github.com/broruan" target="_blank" rel="noopener noreferrer">GitHub <i data-lucide="arrow-up-right" aria-hidden="true"></i></a><span class="nav-divider" aria-hidden="true"></span><button class="icon-button theme-toggle" type="button" aria-label="切换为深色主题" title="切换主题"><i data-lucide="moon" aria-hidden="true"></i></button></nav>
+  </div><div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div></header>
+  <main id="main-content" class="article-page">
+    <a class="article-back" href="index.html#notes"><i data-lucide="arrow-left" aria-hidden="true"></i> 回到笔记本</a>
+    <div id="article-loading" class="empty-state" role="status"><span class="loading-dot"></span><p>正在翻开这篇手记…</p></div>
+    <div id="article-error" class="error-state" role="alert" hidden><h1>这篇手记暂时无法打开</h1><p id="article-error-message"></p><a class="button button-secondary" href="index.html#notes">返回全部手记</a></div>
+    <header id="article-header" class="article-heading" hidden>
+      <div id="article-tags" class="article-tags" aria-label="文章标签"></div>
+      <h1 id="article-title"></h1><p id="article-summary" class="article-summary"></p>
+      <div class="article-byline"><span class="author-monogram">R.</span><span id="article-author">broruan</span><span class="meta-dot">·</span><time id="article-date"></time><span class="meta-dot">·</span><span id="reading-time"></span></div>
     </header>
-
-    <main id="main-content" class="article-page">
-      <section class="article-hero" aria-labelledby="article-title">
-        <div class="article-shell">
-          <a class="article-back" href="index.html#notes">
-            <i data-lucide="arrow-left" aria-hidden="true"></i>
-            返回全部笔记
-          </a>
-
-          <div id="article-loading" class="article-state" aria-live="polite">
-            <span class="loading-dot" aria-hidden="true"></span>
-            <p>正在读取 Markdown 文章…</p>
-          </div>
-
-          <div id="article-error" class="article-error" role="alert" hidden>
-            <p class="empty-code">ARTICLE_ERROR</p>
-            <h1>文章暂时无法打开</h1>
-            <p id="article-error-message">请返回首页后重新选择文章。</p>
-            <a class="button button-secondary" href="index.html#notes">返回公开笔记</a>
-          </div>
-
-          <header id="article-header" class="article-heading" hidden>
-            <p class="section-index">PUBLIC NOTE / <time id="article-date"></time></p>
-            <h1 id="article-title"></h1>
-            <p id="article-summary" class="article-summary"></p>
-            <div class="article-meta-row">
-              <div id="article-tags" class="article-tags" aria-label="文章标签"></div>
-              <a id="article-source" class="text-link" href="#" target="_blank" rel="noreferrer">
-                查看 Markdown 源文件
-                <i data-lucide="external-link" aria-hidden="true"></i>
-              </a>
-            </div>
-          </header>
-        </div>
-      </section>
-
-      <section id="article-body-section" class="article-body-section" hidden>
-        <article id="article-content" class="markdown-body"></article>
-        <div class="article-end">
-          <span aria-hidden="true">EOF</span>
-          <a class="article-back" href="index.html#notes">
-            <i data-lucide="arrow-left" aria-hidden="true"></i>
-            返回全部笔记
-          </a>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <p><span class="footer-mark">R.</span> broruan 的学习日志</p>
-      <p>持续输入，公开输出。</p>
-    </footer>
-
-    <noscript>
-      <div class="noscript-message">此页面需要 JavaScript 才能读取和解析 Markdown 文章。</div>
-    </noscript>
-  </body>
+    <section id="article-body-section" class="article-layout" hidden>
+      <div class="article-main">
+        <div class="reading-toolbar"><span><i data-lucide="book-open" aria-hidden="true"></i> 慢慢读，总会有新的发现。</span><div class="font-controls" aria-label="正文字号"><button id="font-decrease" type="button" aria-label="缩小正文字号">A−</button><button id="font-increase" type="button" aria-label="放大正文字号">A＋</button></div></div>
+        <article id="article-content" class="markdown-body" aria-labelledby="article-title"></article>
+        <div class="article-end"><span class="end-mark" aria-hidden="true">✳</span><p>这一页，到这里。<span>下一次探索，继续记录。</span></p><a id="article-source" class="text-link" href="#" target="_blank" rel="noopener noreferrer">查看原文 <i data-lucide="arrow-up-right" aria-hidden="true"></i></a></div>
+        <nav id="article-neighbors" class="article-neighbors" aria-label="相邻手记"></nav>
+      </div>
+      <aside id="article-sidebar" class="article-sidebar" aria-label="文章目录">
+        <details id="toc-details" class="toc-panel" open><summary><span><i data-lucide="list" aria-hidden="true"></i> 本文目录</span><i data-lucide="chevron-down" aria-hidden="true"></i></summary><nav id="article-toc" class="article-toc" aria-label="章节导航"></nav><div class="toc-progress"><span>阅读进度</span><span id="reading-progress-text">0%</span></div></details>
+        <a class="toc-back-top" href="#main-content"><i data-lucide="arrow-up" aria-hidden="true"></i> 回到顶部</a>
+      </aside>
+    </section>
+  </main>
+  <footer class="site-footer"><p><span class="footer-mark">R.</span> <span id="footer-owner">broruan</span><span class="footer-divider">/</span> 持续输入，公开输出。</p><a href="index.html#notes">更多手记 <i data-lucide="arrow-up-right" aria-hidden="true"></i></a></footer>
+  <dialog id="image-dialog" class="image-dialog" aria-label="查看原图"><button id="close-image" class="icon-button" type="button" aria-label="关闭图片"><i data-lucide="x" aria-hidden="true"></i></button><img id="zoomed-image" alt=""><p id="zoomed-caption"></p></dialog>
+  <noscript><p class="noscript-message">请启用 JavaScript，以读取手记。</p></noscript>
+</body>
 </html>
