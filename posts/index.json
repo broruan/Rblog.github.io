@@ -12,5 +12,6 @@
     "odom_bias.md",
     "minipc_connect.md",
     "study_diagnostic_msgs.md",
-    "Hessian_study.md"
+    "Hessian_study.md",
+    "LM.md"
 ]
