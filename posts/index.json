@@ -14,5 +14,6 @@
     "study_diagnostic_msgs.md",
     "Hessian_study.md",
     "LM.md",
-    "cpp_normal_function.md"
+    "cpp_normal_function.md",
+    "small_gicp_perceive.md"
 ]
