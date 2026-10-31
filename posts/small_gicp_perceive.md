@@ -1,7 +1,7 @@
 ---
 title: "改small_gicp遇到的一些问题"
 date: 2026-10-31
-summary: ""
+summary: "记录 small_gicp 的代码结构，以及海森矩阵、梯度和残差的累加与推导。"
 tags:
   - small_gicp
   - 重定位
